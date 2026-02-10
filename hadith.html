@@ -1,0 +1,267 @@
+﻿<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>رمضان كريم | الأحاديث</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="رمضان كريم">
+    <link rel="apple-touch-icon" href="images/icon-192.png">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/share-utils.js?v=v_spa_fixed_v19"></script>
+    <script src="js/main.js?v=v_spa_fixed_v19"></script>
+    <script src="js/notifications.js?v=v_spa_fixed_v19"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+    <link rel="stylesheet" href="css/style.css?v=v_spa_fixed_v19">
+</head>
+
+<body class="bg-ramadan-dark text-white font-tajawal">
+    <div id="nav-placeholder"></div>
+    <div id="page-content-wrapper">
+        <section id="hadith" class="py-24 min-h-screen relative overflow-hidden">
+            <div class="absolute inset-0 stars opacity-30"></div>
+            <div class="absolute inset-0 islamic-pattern opacity-10"></div>
+            <div class="container mx-auto px-4 relative z-10">
+                <div class="text-center mb-8">
+                    <span class="text-ramadan-gold text-sm font-bold tracking-wider">سنة النبي ﷺ</span>
+                    <h2 class="text-3xl lg:text-5xl font-bold mt-2 font-amiri text-white">الأحاديث الصحيحة</h2>
+                </div>
+
+                <div class="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto">
+                    <!-- Filters -->
+                    <div class="lg:w-1/4 space-y-3">
+                        <button onclick="loadCategory('bukhari')"
+                            class="w-full p-4 rounded-xl glass-effect text-right hover:border-ramadan-gold border border-transparent transition-all flex items-center justify-between group active-category"
+                            id="btn-bukhari">
+                            <span class="font-bold">صحيح البخاري</span>
+                            <i class="fas fa-book text-gray-500 group-hover:text-ramadan-gold"></i>
+                        </button>
+                        <button onclick="loadCategory('muslim')"
+                            class="w-full p-4 rounded-xl glass-effect text-right hover:border-ramadan-gold border border-transparent transition-all flex items-center justify-between group"
+                            id="btn-muslim">
+                            <span class="font-bold">صحيح مسلم</span>
+                            <i class="fas fa-book-open text-gray-500 group-hover:text-ramadan-gold"></i>
+                        </button>
+
+                        <div class="mt-8 glass-effect p-4 rounded-xl">
+                            <label class="text-sm text-gray-400 mb-2 block">البحث في الأحاديث</label>
+                            <input type="text" id="searchInput" placeholder="اكتب كلمة للبحث..."
+                                class="w-full p-3 rounded-lg bg-ramadan-dark/50 border border-ramadan-gold/20 text-white text-sm focus:border-ramadan-gold outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="lg:w-3/4">
+                        <div id="loading" class="hidden text-center py-12">
+                            <div class="loader mx-auto mb-4"></div>
+                            <p>جاري التحميل...</p>
+                        </div>
+
+                        <div id="hadithContainer" class="space-y-4 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
+                            <!-- Content goes here -->
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="mt-6 flex justify-center gap-4 items-center" id="pagination">
+                            <button onclick="changePage(-1)"
+                                class="px-4 py-2 rounded bg-white/10 hover:bg-white/20 disabled:opacity-50"
+                                id="prevBtn"><i class="fas fa-chevron-right"></i></button>
+                            <span id="pageInfo" class="text-sm text-gray-400">صفحة 1</span>
+                            <button onclick="changePage(1)"
+                                class="px-4 py-2 rounded bg-white/10 hover:bg-white/20 disabled:opacity-50"
+                                id="nextBtn"><i class="fas fa-chevron-left"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <div id="footer-placeholder"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            injectNav('hadith');
+            injectFooter();
+            loadCategory('bukhari');
+
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                const val = e.target.value;
+                clearTimeout(window.searchTimeout);
+                window.searchTimeout = setTimeout(() => search(val), 300);
+            });
+        });
+
+        var currentData = [];
+        var filteredData = [];
+        var currentPage = 1;
+        var currentCollection = 'bukhari'; // Track current collection
+        const perPage = 20;
+
+        async function loadCategory(cat) {
+            currentCollection = cat; // Set track
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('hadithContainer').innerHTML = '';
+
+            // UI Toggle
+            document.querySelectorAll('button[id^="btn-"]').forEach(b => b.classList.remove('border-ramadan-gold', 'bg-ramadan-gold/10'));
+            document.getElementById(`btn-${cat}`).classList.add('border-ramadan-gold', 'bg-ramadan-gold/10');
+
+            try {
+                const res = await fetch(`data/${cat}.json`);
+                const json = await res.json();
+                currentData = json.hadiths || [];
+                // Re-apply search if exists
+                const query = document.getElementById('searchInput').value;
+                if (query) {
+                    search(query);
+                } else {
+                    filteredData = currentData;
+                    currentPage = 1;
+                    renderPage();
+                }
+            } catch (e) {
+                console.error(e);
+                document.getElementById('hadithContainer').innerHTML = '<p class="text-center text-red-400">فشل في تحميل البيانات</p>';
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        function renderPage() {
+            const container = document.getElementById('hadithContainer');
+            container.innerHTML = '';
+
+            if (filteredData.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 py-8">لا توجد نتائج</p>';
+                updatePagination();
+                return;
+            }
+
+            const start = (currentPage - 1) * perPage;
+            const end = start + perPage;
+            const slice = filteredData.slice(start, end);
+
+            slice.forEach(h => {
+                const div = document.createElement('div');
+                div.className = "glass-effect p-6 rounded-xl border-r-4 border-ramadan-gold relative group";
+                const hNum = h.hadithnumber || h.hadith_number || 'N/A';
+
+                // Highlight search term
+                let text = h.text;
+                const query = document.getElementById('searchInput').value;
+                if (query) {
+                    // Simple highlight implementation
+                    // Note: Complete highlighting with normalization is complex to do perfectly in HTML rendering
+                    // without breaking tags, but here text is plain strings usually.
+                    // For now, we just display the text as is, or we could try a simple replace if identical
+                }
+
+                div.innerHTML = `
+                    <div class="text-lg font-amiri leading-loose text-gray-100 mb-4 px-2 text-justify">
+                        ${text}
+                    </div>
+                    
+                    <!-- Card Footer -->
+                    <div class="flex items-center justify-between border-t border-white/5 pt-4 mt-2">
+                         <div class="flex items-center gap-2">
+                             <!-- Share Button -->
+                            <button onclick="showShareOptions('${h.text.replace(/'/g, "\\'")}', '${currentCollection === 'bukhari' ? 'صحيح البخاري' : 'صحيح مسلم'} - رقم: ${hNum}')"
+                                    class="w-10 h-10 rounded-full bg-white/5 hover:bg-ramadan-gold/20 text-gray-400 hover:text-ramadan-gold transition-all flex items-center justify-center"
+                                    title="مشاركة">
+                                <i class="fas fa-share-alt text-lg"></i>
+                            </button>
+                            <!-- Bookmark Button -->
+                            <button onclick="toggleBookmark('hadith', '${currentCollection}', '${hNum}', '${h.text.replace(/'/g, "\\'")}')" 
+                                    class="w-10 h-10 rounded-full bg-white/5 hover:bg-ramadan-gold/20 text-gray-400 hover:text-red-500 transition-all flex items-center justify-center" 
+                                    id="bm-hadith-${currentCollection}-${hNum}">
+                                <i class="${isBookmarked('hadith', currentCollection, hNum) ? 'fas' : 'far'} fa-heart text-lg"></i>
+                            </button>
+                         </div>
+
+                        <div class="text-xs text-gray-400 flex items-center gap-2 bg-white/5 px-3 py-1 rounded-full">
+                            <span>رقم الحديث:</span>
+                            <span class="font-bold text-ramadan-gold">${hNum}</span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            updatePagination();
+            container.scrollTop = 0;
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredData.length / perPage);
+            const displayPage = totalPages === 0 ? 0 : currentPage;
+            document.getElementById('pageInfo').textContent = `صفحة ${displayPage} من ${totalPages}`;
+            document.getElementById('prevBtn').disabled = currentPage <= 1;
+            document.getElementById('nextBtn').disabled = currentPage >= totalPages || totalPages === 0;
+        }
+
+        function changePage(delta) {
+            currentPage += delta;
+            renderPage();
+        }
+
+        function search(q) {
+            const query = normalizeArabic(q);
+            if (!query) {
+                filteredData = currentData;
+            } else {
+                filteredData = currentData.filter(h => {
+                    const normText = normalizeArabic(h.text);
+                    return normText.includes(query);
+                });
+            }
+            currentPage = 1;
+            renderPage();
+        }
+
+        // --- Bookmark Logic ---
+        function getBookmarks() {
+            return JSON.parse(localStorage.getItem('ramadan_bookmarks') || '[]');
+        }
+
+        function isBookmarked(type, coll, num) {
+            const bookmarks = getBookmarks();
+            return bookmarks.some(b => b.type === 'hadith' && b.collection === coll && b.id === num);
+        }
+
+        function toggleBookmark(type, coll, num, text) {
+            let bookmarks = getBookmarks();
+            const index = bookmarks.findIndex(b => b.type === 'hadith' && b.collection === coll && b.id === num);
+
+            const btn = document.getElementById(`bm-hadith-${coll}-${num}`);
+            const icon = btn.querySelector('i');
+
+            if (index > -1) {
+                bookmarks.splice(index, 1);
+                icon.className = 'far fa-heart';
+            } else {
+                bookmarks.push({
+                    type,
+                    collection: coll,
+                    id: num,
+                    collectionName: coll === 'bukhari' ? 'صحيح البخاري' : 'صحيح مسلم',
+                    text
+                });
+                icon.className = 'fas fa-heart text-red-500';
+            }
+
+            localStorage.setItem('ramadan_bookmarks', JSON.stringify(bookmarks));
+        }
+    </script>
+    <div id="global-player"></div>
+</body>
+
+</html>
+

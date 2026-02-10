@@ -1,0 +1,240 @@
+﻿<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="description" content="حاسبة الزكاة الذكية - احسب زكاة المال وزكاة الفطر بسهولة" />
+    <title>رمضان كريم | حاسبة الزكاة</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="رمضان كريم">
+    <link rel="apple-touch-icon" href="images/icon-192.png">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/share-utils.js?v=v_spa_fixed_v19"></script>
+    <script src="js/main.js?v=v_spa_fixed_v19"></script>
+    <script src="js/notifications.js?v=v_spa_fixed_v19"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+    <link rel="stylesheet" href="css/style.css?v=v_spa_fixed_v19">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'ramadan-gold': '#fbbf24',
+                        'ramadan-dark': '#0f172a',
+                        'ramadan-green': '#064e3b',
+                    },
+                    fontFamily: {
+                        'amiri': ['Amiri', 'serif'],
+                        'tajawal': ['Tajawal', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-ramadan-dark text-white font-tajawal overflow-x-hidden">
+
+    <!-- Nav Placeholder -->
+    <div id="nav-placeholder"></div>
+    <div id="page-content-wrapper">
+        <section id="zakat" class="py-24 min-h-screen relative overflow-hidden">
+            <div class="absolute inset-0 stars opacity-40"></div>
+            <div class="absolute inset-0 islamic-pattern opacity-10"></div>
+
+            <div class="container mx-auto px-4 relative z-10 text-center">
+                <h1 class="text-3xl md:text-5xl font-bold font-amiri text-ramadan-gold mb-4">
+                    حاسبة الزكاة الذكية
+                </h1>
+                <p class="text-gray-300 max-w-2xl mx-auto text-lg mb-8">
+                    أداة دقيقة لحساب زكاة المال وزكاة الفطر وفقاً للنصاب الشرعي وأسعار الذهب الحالية.
+                </p>
+
+                <!-- Calculator Container -->
+                <div class="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+
+                    <!-- Input Section -->
+                    <div class="lg:col-span-2 glass-effect p-6 rounded-2xl border border-ramadan-gold/20 text-right">
+
+                        <!-- Tabs -->
+                        <div class="flex border-b border-gray-700 mb-6">
+                            <button onclick="switchTab('mal')" id="tab-mal"
+                                class="flex-1 py-3 text-ramadan-gold border-b-2 border-ramadan-gold font-bold transition-all">
+                                <i class="fas fa-coins ml-2"></i> زكاة المال
+                            </button>
+                            <button onclick="switchTab('fitr')" id="tab-fitr"
+                                class="flex-1 py-3 text-gray-400 border-b-2 border-transparent hover:text-white transition-all">
+                                <i class="fas fa-users ml-2"></i> زكاة الفطر
+                            </button>
+                        </div>
+
+                        <!-- Zakat Al Mal Form -->
+                        <div id="zakat-mal-form" class="space-y-6">
+
+                            <div class="bg-amber-900/20 p-4 rounded-lg border border-amber-500/30 mb-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-amber-400 font-bold"><i class="fas fa-info-circle ml-2"></i> سعر
+                                        جرام
+                                        الذهب (عيار 24)</span>
+                                    <input type="number" id="goldPrice"
+                                        class="w-24 bg-black/50 border border-amber-500/50 rounded px-2 py-1 text-center text-white"
+                                        oninput="calculateZakatMal()">
+                                </div>
+                                <p class="text-xs text-gray-400">النصاب الشرعي (85 جرام ذهب): <span id="nisabValue"
+                                        class="font-bold text-white">255,000</span> عملة محلية</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-300 text-sm mb-2">السيولة النقدية (في
+                                        البنك/المنزل)</label>
+                                    <input type="number" id="cashAmount" placeholder="0"
+                                        class="w-full bg-black/30 border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-ramadan-gold/50 focus:outline-none"
+                                        oninput="calculateZakatMal()">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-300 text-sm mb-2">ودائع استثمارية / أسهم</label>
+                                    <input type="number" id="investAmount" placeholder="0"
+                                        class="w-full bg-black/30 border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-ramadan-gold/50 focus:outline-none"
+                                        oninput="calculateZakatMal()">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-300 text-sm mb-2">قيمة الذهب المدخر (ليس
+                                        للزينة)</label>
+                                    <input type="number" id="goldAmount" placeholder="0"
+                                        class="w-full bg-black/30 border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-ramadan-gold/50 focus:outline-none"
+                                        oninput="calculateZakatMal()">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-300 text-sm mb-2">ديون "لك" (مرحوة الأداء)</label>
+                                    <input type="number" id="debtsToYou" placeholder="0"
+                                        class="w-full bg-black/30 border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-ramadan-gold/50 focus:outline-none"
+                                        oninput="calculateZakatMal()">
+                                </div>
+                            </div>
+
+                            <div class="border-t border-gray-700 pt-4 mt-4">
+                                <label class="block text-gray-300 text-sm mb-2">ديون "عليك" (تخصم من الزكاة)</label>
+                                <input type="number" id="debtsOnYou" placeholder="0"
+                                    class="w-full bg-black/30 border border-red-900/50 rounded-lg px-4 py-3 text-white focus:border-red-500/50 focus:outline-none"
+                                    oninput="calculateZakatMal()">
+                            </div>
+
+                        </div>
+
+                        <!-- Zakat Fitr Form -->
+                        <div id="zakat-fitr-form" class="hidden space-y-6">
+                            <div class="bg-green-900/20 p-4 rounded-lg border border-green-500/30 mb-4">
+                                <p class="text-sm text-green-200">زكاة الفطر واجبة على كل مسلم، وتخرج طعاماً أو قيمة
+                                    نقدية
+                                    قبل صلاة العيد.</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-300 text-sm mb-2">قيمة زكاة الفطر للفرد (حسب دار
+                                    الإفتاء)</label>
+                                <input type="number" id="fitrPrice"
+                                    class="w-full bg-black/30 border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-ramadan-gold/50 focus:outline-none"
+                                    oninput="calculateZakatFitr()">
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-300 text-sm mb-2">عدد أفراد الأسرة (شاملاً العائل)</label>
+                                <div class="flex items-center gap-4">
+                                    <button onclick="adjustFamily(-1)"
+                                        class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-xl font-bold">-</button>
+                                    <input type="number" id="familyCount" value="1"
+                                        class="w-20 bg-transparent text-center text-2xl font-bold text-ramadan-gold border-none focus:outline-none"
+                                        readonly>
+                                    <button onclick="adjustFamily(1)"
+                                        class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-xl font-bold">+</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Result Section -->
+                    <div class="lg:col-span-1">
+
+                        <!-- Mal Result -->
+                        <div id="result-mal"
+                            class="glass-effect p-6 rounded-2xl border border-ramadan-gold/50 sticky top-24">
+                            <h3 class="text-xl font-bold text-gray-200 mb-4 border-b border-white/10 pb-2">ملخص الحساب
+                            </h3>
+
+                            <div class="space-y-4 mb-6">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-400">إجمالي الأموال:</span>
+                                    <span class="font-bold" id="totalAssets">0</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-400">الخصومات (الديون):</span>
+                                    <span class="font-bold text-red-400" id="totalLiabilities">0</span>
+                                </div>
+                                <div class="flex justify-between text-lg font-bold pt-2 border-t border-white/10">
+                                    <span class="text-ramadan-gold">صافي الثروة:</span>
+                                    <span id="netWealth">0</span>
+                                </div>
+                            </div>
+
+                            <!-- Eligiblity Status -->
+                            <div id="zakatStatus"
+                                class="bg-gray-800 p-3 rounded-lg text-center text-sm text-gray-400 mb-6">
+                                أدخل البيانات أولاً
+                            </div>
+
+                            <div class="text-center">
+                                <p class="text-gray-400 text-sm mb-1">مقدار الزكاة الواجبة (2.5%)</p>
+                                <div class="text-4xl font-bold text-ramadan-gold font-amiri mb-2" id="zakatDue">0</div>
+                                <span class="text-xs text-gray-500">عملة محلية</span>
+                            </div>
+                        </div>
+
+                        <!-- Fitr Result -->
+                        <div id="result-fitr"
+                            class="hidden glass-effect p-6 rounded-2xl border border-green-500/50 sticky top-24">
+                            <h3 class="text-xl font-bold text-gray-200 mb-4 border-b border-white/10 pb-2">حساب زكاة
+                                الفطر
+                            </h3>
+                            <div class="text-center py-6">
+                                <p class="text-gray-400 text-sm mb-2">المبلغ الإجمالي المستحق</p>
+                                <div class="text-5xl font-bold text-green-400 font-amiri mb-2" id="fitrTotal">35</div>
+                                <span class="text-xs text-gray-500">عن الأسرة بالكامل</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer Placeholder -->
+    <div id="footer-placeholder"></div>
+
+    <script src="js/zakat.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            injectNav('zakat'); // We need to update existing pages to support 'zakat' active state later
+            injectFooter();
+            calculateZakatMal(); // Init
+            calculateZakatFitr(); // Init
+        });
+    </script>
+    <div id="global-player"></div>
+</body>
+
+</html>

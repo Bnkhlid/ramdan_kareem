@@ -1,0 +1,784 @@
+﻿<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>رمضان كريم | تتبع و ختمات</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="رمضان كريم">
+    <link rel="apple-touch-icon" href="images/icon-192.png">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700;800&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/share-utils.js?v=v_spa_fixed_v19"></script>
+    <script src="js/main.js?v=v_spa_fixed_v19"></script>
+    <script src="js/notifications.js?v=v_spa_fixed_v19"></script>
+    <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+    <link rel="stylesheet" href="css/style.css?v=v_spa_fixed_v19">
+    <style>
+        .task-checkbox:checked {
+            background-color: #fbbf24;
+            border-color: #fbbf24;
+            background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+        }
+
+        .day-active {
+            transform: scale(1.1);
+            border: 2px solid #fff;
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.5);
+        }
+
+        .day-completed {
+            background-color: #059669;
+            /* Green */
+            color: white;
+            border: 1px solid #10b981;
+        }
+
+        .day-started {
+            background-color: #d97706;
+            /* Amber-600 */
+            color: white;
+        }
+
+        .fire-anim {
+            animation: firePulse 2s infinite;
+        }
+
+        @keyframes firePulse {
+            0% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 2px #f59e0b);
+            }
+
+            50% {
+                transform: scale(1.2);
+                filter: drop-shadow(0 0 8px #ef4444);
+            }
+
+            100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 2px #f59e0b);
+            }
+        }
+
+        /* FORCE DARK BACKGROUND - OVERRIDE EVERYTHING */
+        body {
+            background: #0f172a !important;
+            background-color: #0f172a !important;
+            background-image: none !important;
+        }
+
+        body.theme-morning,
+        body.theme-afternoon,
+        body.theme-sunset,
+        body.theme-night {
+            background: #0f172a !important;
+            background-color: #0f172a !important;
+            background-image: none !important;
+        }
+    </style>
+
+
+</head>
+
+<body class="bg-ramadan-dark text-white font-tajawal"
+    style="background-color: #0f172a !important; background: #0f172a !important;">
+    <div id="nav-placeholder"></div>
+    <div id="page-content-wrapper">
+        <section id="tracker" class="py-24 min-h-screen relative overflow-hidden">
+            <!-- Background Elements -->
+            <div class="absolute inset-0 stars opacity-30"></div>
+            <div class="absolute inset-0 islamic-pattern opacity-10"></div>
+
+            <div class="container mx-auto px-4 relative z-10">
+                <div class="text-center mb-8">
+                    <span class="text-ramadan-gold text-sm font-bold tracking-wider">تتبع عباداتك في رمضان</span>
+                    <h2 class="text-3xl lg:text-5xl font-bold mt-2 font-amiri text-white">مسار رمضان</h2>
+
+                    <!-- Streak Counter -->
+                    <div
+                        class="mt-4 inline-flex items-center gap-2 bg-black/40 px-4 py-2 rounded-full border border-ramadan-gold/30">
+                        <span class="text-2xl fire-anim">🔥</span>
+                        <span class="text-white font-bold" id="streakCount">0</span>
+                        <span class="text-gray-400 text-sm">أيام متتالية</span>
+                    </div>
+                </div>
+
+                <!-- Header Date & Strip -->
+                <div class="max-w-6xl mx-auto mb-8 px-2">
+                    <div class="glass-effect rounded-2xl p-4 flex flex-col gap-4">
+                        <div
+                            class="flex flex-col md:flex-row gap-3 items-center justify-between border-b border-white/10 pb-4">
+                            <div class="text-xs md:text-sm text-gray-300 text-center md:text-right">
+                                بداية رمضان: <span id="displayStartDate">-</span>
+                            </div>
+                            <div class="flex gap-2 items-center">
+                                <input id="ramadanStartDate" type="date"
+                                    class="p-2 rounded bg-ramadan-dark/60 border border-ramadan-gold/20 text-white text-sm w-full md:w-auto font-sans" />
+                                <button onclick="applyRamadanStart()"
+                                    class="px-3 py-2 rounded bg-ramadan-gold text-ramadan-dark text-sm font-bold hover:bg-white transition-colors">تحديث</button>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 overflow-x-auto pb-2 custom-scrollbar" id="daysStrip"
+                            aria-label="أيام رمضان">
+                            <!-- JS generated -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Grid -->
+                <div class="max-w-6xl mx-auto px-2 grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                    <!-- Daily Tasks -->
+                    <div class="glass-effect rounded-2xl p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl md:text-2xl font-bold text-ramadan-gold" id="currentDayTitle">اليوم 1 من
+                                رمضان</h3>
+                            <span class="text-gray-400 text-sm font-mono" id="currentDate"></span>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div>
+                                <h4
+                                    class="font-bold text-ramadan-gold mb-3 text-sm md:text-base border-b border-ramadan-gold/20 pb-2">
+                                    <i class="fas fa-tasks ml-2"></i> المهام اليومية
+                                </h4>
+                                <div class="space-y-2">
+                                    <label
+                                        class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-all group">
+                                        <input type="checkbox"
+                                            class="task-checkbox appearance-none w-5 h-5 rounded border border-ramadan-gold/30 cursor-pointer transition-all"
+                                            data-task="prayer" onchange="saveTask(this)">
+                                        <span
+                                            class="text-sm md:text-base group-hover:text-ramadan-gold transition-colors">الصلوات
+                                            المفروضة في وقتها</span>
+                                    </label>
+                                    <label
+                                        class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-all group">
+                                        <input type="checkbox"
+                                            class="task-checkbox appearance-none w-5 h-5 rounded border border-ramadan-gold/30 cursor-pointer transition-all"
+                                            data-task="quran" onchange="saveTask(this)">
+                                        <span
+                                            class="text-sm md:text-base group-hover:text-ramadan-gold transition-colors">قراءة
+                                            الورد اليومي</span>
+                                    </label>
+                                    <label
+                                        class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-all group">
+                                        <input type="checkbox"
+                                            class="task-checkbox appearance-none w-5 h-5 rounded border border-ramadan-gold/30 cursor-pointer transition-all"
+                                            data-task="taraweeh" onchange="saveTask(this)">
+                                        <span
+                                            class="text-sm md:text-base group-hover:text-ramadan-gold transition-colors">صلاة
+                                            التراويح / القيام</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4
+                                    class="font-bold text-ramadan-gold mb-3 text-sm md:text-base border-b border-ramadan-gold/20 pb-2">
+                                    <i class="fas fa-heart ml-2"></i> سنن و أذكار
+                                </h4>
+                                <div class="space-y-2">
+                                    <label
+                                        class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-all group">
+                                        <input type="checkbox"
+                                            class="task-checkbox appearance-none w-5 h-5 rounded border border-ramadan-gold/30 cursor-pointer transition-all"
+                                            data-task="sunnah" onchange="saveTask(this)">
+                                        <span
+                                            class="text-sm md:text-base group-hover:text-ramadan-gold transition-colors">السنن
+                                            الرواتب</span>
+                                    </label>
+                                    <label
+                                        class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-all group">
+                                        <input type="checkbox"
+                                            class="task-checkbox appearance-none w-5 h-5 rounded border border-ramadan-gold/30 cursor-pointer transition-all"
+                                            data-task="dhikr" onchange="saveTask(this)">
+                                        <span
+                                            class="text-sm md:text-base group-hover:text-ramadan-gold transition-colors">أذكار
+                                            الصباح والمساء</span>
+                                    </label>
+                                    <label
+                                        class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-all group">
+                                        <input type="checkbox"
+                                            class="task-checkbox appearance-none w-5 h-5 rounded border border-ramadan-gold/30 cursor-pointer transition-all"
+                                            data-task="istighfar" onchange="saveTask(this)">
+                                        <span
+                                            class="text-sm md:text-base group-hover:text-ramadan-gold transition-colors">الاستغفار
+                                            (100 مرة)</span>
+                                    </label>
+                                    <label
+                                        class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-all group">
+                                        <input type="checkbox"
+                                            class="task-checkbox appearance-none w-5 h-5 rounded border border-ramadan-gold/30 cursor-pointer transition-all"
+                                            data-task="tasbih" onchange="saveTask(this)">
+                                        <span
+                                            class="text-sm md:text-base group-hover:text-ramadan-gold transition-colors">التسبيح
+                                            (100 مرة)</span>
+                                    </label>
+                                    <label
+                                        class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-all group">
+                                        <input type="checkbox"
+                                            class="task-checkbox appearance-none w-5 h-5 rounded border border-ramadan-gold/30 cursor-pointer transition-all"
+                                            data-task="dua" onchange="saveTask(this)">
+                                        <span
+                                            class="text-sm md:text-base group-hover:text-ramadan-gold transition-colors">الدعاء</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4
+                                    class="font-bold text-ramadan-gold mb-3 text-sm md:text-base border-b border-ramadan-gold/20 pb-2">
+                                    <i class="fas fa-hand-holding-heart ml-2"></i> أعمال البر
+                                </h4>
+                                <div class="space-y-2">
+                                    <label
+                                        class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-all group">
+                                        <input type="checkbox"
+                                            class="task-checkbox appearance-none w-5 h-5 rounded border border-ramadan-gold/30 cursor-pointer transition-all"
+                                            data-task="charity" onchange="saveTask(this)">
+                                        <span
+                                            class="text-sm md:text-base group-hover:text-ramadan-gold transition-colors">صدقة
+                                            يومية</span>
+                                    </label>
+                                    <label
+                                        class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-all group">
+                                        <input type="checkbox"
+                                            class="task-checkbox appearance-none w-5 h-5 rounded border border-ramadan-gold/30 cursor-pointer transition-all"
+                                            data-task="silah" onchange="saveTask(this)">
+                                        <span
+                                            class="text-sm md:text-base group-hover:text-ramadan-gold transition-colors">صلة
+                                            الرحم</span>
+                                    </label>
+                                    <label
+                                        class="flex items-center gap-3 p-3 rounded-lg bg-white/5 cursor-pointer hover:bg-white/10 transition-all group">
+                                        <input type="checkbox"
+                                            class="task-checkbox appearance-none w-5 h-5 rounded border border-ramadan-gold/30 cursor-pointer transition-all"
+                                            data-task="iftar" onchange="saveTask(this)">
+                                        <span
+                                            class="text-sm md:text-base group-hover:text-ramadan-gold transition-colors">إفطار
+                                            صائم</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4
+                                    class="font-bold text-ramadan-gold mb-3 text-sm md:text-base border-b border-ramadan-gold/20 pb-2">
+                                    <i class="fas fa-pen ml-2"></i> ملاحظات
+                                </h4>
+                                <textarea id="dayNote" onchange="saveNote(this)"
+                                    class="w-full p-4 rounded-xl bg-ramadan-dark/50 border border-ramadan-gold/20 text-white placeholder-gray-500 focus:outline-none focus:border-ramadan-gold resize-none text-sm leading-relaxed h-24"
+                                    placeholder="اكتب خواطرك أو إنجازاتك اليوم..."></textarea>
+                            </div>
+
+                            <!-- Qada Tracker (Missed Fast) -->
+                            <div class="mt-4 pt-4 border-t border-white/10">
+                                <div
+                                    class="flex items-center justify-between bg-red-900/20 p-3 rounded-lg border border-red-500/20">
+                                    <div class="flex items-center gap-2">
+                                        <input type="checkbox" id="missedFastToggle"
+                                            class="w-5 h-5 accent-red-500 cursor-pointer" onchange="toggleQada()">
+                                        <label for="missedFastToggle" class="text-sm text-red-200 cursor-pointer">لم أصم
+                                            هذا
+                                            اليوم (عذر/سفر)</label>
+                                    </div>
+                                    <span class="text-xs text-red-300 font-bold" id="qadaCountBadge">عليك 0 أيام</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Khatmah Schedule & Progress -->
+                    <div class="space-y-6">
+                        <div class="glass-effect rounded-2xl p-6">
+                            <h4
+                                class="font-bold text-ramadan-gold mb-4 text-lg border-b border-ramadan-gold/20 pb-3 flex justify-between items-center">
+                                <span><i class="fas fa-book-open ml-2"></i> جدول الختمة</span>
+                                <span class="text-xs text-gray-400 font-normal">توزيع الصفحات على الصلوات</span>
+                            </h4>
+
+                            <p class="text-gray-300 text-sm mb-4">حدد هدفك لتظهر لك خطة القراءة اليومية:</p>
+
+                            <div class="flex flex-wrap gap-2 mb-6">
+                                <button onclick="setKhatmah(1)"
+                                    class="khatmah-btn px-3 py-2 rounded-lg bg-white/5 hover:bg-ramadan-gold/20 border border-transparent text-sm flex-1 transition-all"
+                                    data-khatmah="1">ختمة واحدة</button>
+                                <button onclick="setKhatmah(2)"
+                                    class="khatmah-btn px-3 py-2 rounded-lg bg-white/5 hover:bg-ramadan-gold/20 border border-transparent text-sm flex-1 transition-all"
+                                    data-khatmah="2">ختمتان</button>
+                                <button onclick="setKhatmah(3)"
+                                    class="khatmah-btn px-3 py-2 rounded-lg bg-white/5 hover:bg-ramadan-gold/20 border border-transparent text-sm flex-1 transition-all"
+                                    data-khatmah="3">3 ختمات</button>
+                            </div>
+
+                            <!-- Daily Schedule Card -->
+                            <div id="prayerSchedule" class="bg-ramadan-dark/40 rounded-xl p-4 border border-white/5">
+                                <h5 class="text-ramadan-gold font-bold mb-3 text-sm text-center">جدولك اليومي (اليوم
+                                    <span id="scheduleDayNum">1</span>)
+                                </h5>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between items-center p-2 bg-white/5 rounded">
+                                        <span>الفجر</span>
+                                        <span class="text-gray-300" id="pages-fajr">4 صفحات</span>
+                                    </div>
+                                    <div class="flex justify-between items-center p-2 bg-white/5 rounded">
+                                        <span>الظهر</span>
+                                        <span class="text-gray-300" id="pages-dhuhr">4 صفحات</span>
+                                    </div>
+                                    <div class="flex justify-between items-center p-2 bg-white/5 rounded">
+                                        <span>العصر</span>
+                                        <span class="text-gray-300" id="pages-asr">4 صفحات</span>
+                                    </div>
+                                    <div class="flex justify-between items-center p-2 bg-white/5 rounded">
+                                        <span>المغرب</span>
+                                        <span class="text-gray-300" id="pages-maghrib">4 صفحات</span>
+                                    </div>
+                                    <div class="flex justify-between items-center p-2 bg-white/5 rounded">
+                                        <span>العشاء</span>
+                                        <span class="text-gray-300" id="pages-isha">4 صفحات</span>
+                                    </div>
+                                </div>
+                                <div class="mt-4 pt-3 border-t border-white/10 text-center flex flex-col gap-2">
+                                    <p class="text-xs text-gray-400">إجمالي اليوم: <span id="totalDailyPages"
+                                            class="text-ramadan-gold font-bold">20</span> صفحة</p>
+
+                                    <!-- Smart Link -->
+                                    <button onclick="continueReading()"
+                                        class="w-full bg-ramadan-gold/10 hover:bg-ramadan-gold/20 text-ramadan-gold border border-ramadan-gold/40 py-2 rounded-lg text-sm transition-colors flex items-center justify-center gap-2">
+                                        <i class="fas fa-book-open"></i> أكمل القراءة من آخر وقوف
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Tracking -->
+                        <div class="glass-effect rounded-2xl p-6">
+                            <h4
+                                class="font-bold text-ramadan-gold mb-4 text-lg border-b border-ramadan-gold/20 pb-3 flex justify-between items-center">
+                                <span><i class="fas fa-chart-line ml-2"></i> تقدمي العام</span>
+                                <span class="text-xs bg-ramadan-gold/20 text-ramadan-gold px-2 py-1 rounded-full"
+                                    id="khatmahBadge">الختمة 1</span>
+                            </h4>
+
+                            <div class="mb-4">
+                                <div class="flex justify-between text-xs text-gray-400 mb-2">
+                                    <span>نسبة إنجاز الختمة الحالية</span>
+                                    <span id="khatmahPercent">0%</span>
+                                </div>
+                                <div class="h-4 bg-white/10 rounded-full overflow-hidden">
+                                    <div id="khatmahProgress"
+                                        class="h-full bg-ramadan-gold transition-all duration-500 relative"
+                                        style="width: 0%">
+                                        <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white/5 rounded-xl p-4">
+                                <label class="block text-xs text-gray-400 mb-2">أدخل آخر صفحة وصلت إليها:</label>
+                                <div class="flex gap-2 mb-3">
+                                    <input type="number" id="pagesReadInput"
+                                        class="flex-1 p-2 rounded bg-ramadan-dark border border-white/10 text-white text-sm focus:border-ramadan-gold"
+                                        placeholder="رقم الصفحة (1-604)">
+                                    <button onclick="saveProgress()"
+                                        class="px-4 py-2 bg-ramadan-gold text-ramadan-dark text-sm font-bold rounded hover:bg-white transition-colors">حفظ</button>
+                                </div>
+
+                                <div class="flex flex-col gap-2">
+                                    <p class="text-xs text-gray-500 text-center mb-2">
+                                        <span id="pagesRead">0</span> / <span id="totalPages">604</span> صفحة
+                                    </p>
+                                    <button onclick="completeCurrentKhatmah()" id="completeKhatmahBtn"
+                                        class="w-full py-2 rounded border border-ramadan-gold text-ramadan-gold text-xs hover:bg-ramadan-gold hover:text-ramadan-dark transition-all hidden">
+                                        <i class="fas fa-check-circle ml-1"></i> أتممت هذه الختمة، ابدأ التالية
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    </div>
+    <div id="footer-placeholder"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            injectNav('tracker');
+            injectFooter();
+            initTracker();
+        });
+
+        // Config
+        var activeDay = 1; // The day currently being viewed
+        var actualRamadanDay = 1; // The actual calculated day of Ramadan based on date
+        var startRamadan = new Date('2026-02-18');
+        var khatmahType = 1;
+        var totalQuranPages = 604;
+        var pagesRead = 0;
+        var currentKhatmahCount = 1;
+
+        function initTracker() {
+            // Load start date
+            const savedStart = localStorage.getItem('ramadan_start_date');
+            if (savedStart) startRamadan = new Date(savedStart);
+            document.getElementById('ramadanStartDate').value = startRamadan.toISOString().split('T')[0];
+            document.getElementById('displayStartDate').textContent = startRamadan.toLocaleDateString('ar-EG');
+
+            calculateRamadanDays();
+
+            // Set initial view to actual day
+            activeDay = actualRamadanDay;
+
+            renderDaysStrip();
+            loadDayData(activeDay);
+
+            // Load Khatmah Type
+            const savedKhatmahTarget = localStorage.getItem('ramadan_khatmah_target');
+            if (savedKhatmahTarget) khatmahType = parseInt(savedKhatmahTarget);
+            setKhatmah(khatmahType);
+
+            // Load Progress & Current Khatmah
+            const savedPages = localStorage.getItem('ramadan_pages_read');
+            const savedKhatmahCount = localStorage.getItem('ramadan_khatmah_count');
+
+            if (savedPages) pagesRead = parseInt(savedPages);
+            if (savedKhatmahCount) currentKhatmahCount = parseInt(savedKhatmahCount);
+
+            // Check legacy data fix: if old cumulative total is > 604
+            if (pagesRead > 604) {
+                currentKhatmahCount = Math.ceil(pagesRead / 604);
+                pagesRead = pagesRead % 604;
+                if (pagesRead === 0 && currentKhatmahCount > 1) pagesRead = 604;
+                saveProgressInternally();
+            }
+
+            document.getElementById('pagesReadInput').value = pagesRead;
+            updateProgressUI();
+
+            // New Features Init
+            updateStreak();
+            updateQadaBadge();
+        }
+
+        function calculateRamadanDays() {
+            const now = new Date();
+            // Reset both dates to midnight to compare date only
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const start = new Date(startRamadan.getFullYear(), startRamadan.getMonth(), startRamadan.getDate());
+
+            const diffTime = today - start;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+            if (diffDays < 1) actualRamadanDay = 1; // Not started yet, default to 1 for view
+            else if (diffDays > 30) actualRamadanDay = 30; // Ended
+            else actualRamadanDay = diffDays;
+        }
+
+        function renderDaysStrip() {
+            const strip = document.getElementById('daysStrip');
+            strip.innerHTML = '';
+
+            for (var i = 1; i <= 30; i++) {
+                const btn = document.createElement('button');
+
+                // Determine Day Status for Color
+                // Gray = No Data, Orange = Some Data, Green = >70% Completed
+                var statusClass = 'bg-white/5 text-gray-400';
+
+                // Check completion
+                const progress = calculateDayProgress(i);
+                if (progress > 0) statusClass = 'day-started'; // Orange
+                if (progress >= 70) statusClass = 'day-completed'; // Green
+
+                // Highlight actual today
+                if (i === actualRamadanDay) {
+                    statusClass += ' ring-2 ring-ramadan-gold/50';
+                }
+
+                const activeClass = i === activeDay ? 'day-active' : statusClass + ' hover:bg-white/10';
+
+                btn.className = `flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center text-sm font-bold transition-all border border-white/5 ${activeClass}`;
+                btn.textContent = i;
+                btn.onclick = () => loadDayData(i);
+                strip.appendChild(btn);
+            }
+        }
+
+        function calculateDayProgress(day) {
+            // Helper to calc % of checked boxes
+            var total = 0;
+            var checked = 0;
+            const tasks = ['prayer', 'quran', 'taraweeh', 'sunnah', 'dhikr', 'istighfar', 'tasbih', 'dua', 'charity', 'silah', 'iftar'];
+
+            tasks.forEach(task => {
+                total++;
+                if (localStorage.getItem(`ramadan_day_${day}_task_${task}`) === 'true') checked++;
+            });
+
+            return (checked / total) * 100;
+        }
+
+        function loadDayData(day) {
+            activeDay = day;
+
+            document.getElementById('currentDayTitle').textContent = `اليوم ${day} من رمضان`;
+            document.getElementById('scheduleDayNum').textContent = day;
+
+            const date = new Date(startRamadan);
+            date.setDate(date.getDate() + (day - 1));
+            document.getElementById('currentDate').textContent = date.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            // Re-render strip to update active states
+            renderDaysStrip();
+
+            document.querySelectorAll('.task-checkbox').forEach(box => {
+                const key = `ramadan_day_${day}_task_${box.dataset.task}`;
+                box.checked = localStorage.getItem(key) === 'true';
+            });
+
+            const noteKey = `ramadan_day_${day}_note`;
+            document.getElementById('dayNote').value = localStorage.getItem(noteKey) || '';
+
+            // Load Missed Fast State
+            const missedKey = `ramadan_day_${day}_missed_fast`;
+            document.getElementById('missedFastToggle').checked = localStorage.getItem(missedKey) === 'true';
+
+            updateDailySchedule(day);
+        }
+
+        function saveTask(checkbox) {
+            const key = `ramadan_day_${activeDay}_task_${checkbox.dataset.task}`;
+            localStorage.setItem(key, checkbox.checked);
+            renderDaysStrip(); // Update colors live
+            updateStreak(); // Check streak update
+        }
+
+        function saveNote(textarea) {
+            const key = `ramadan_day_${activeDay}_note`;
+            localStorage.setItem(key, textarea.value);
+        }
+
+        function applyRamadanStart() {
+            const val = document.getElementById('ramadanStartDate').value;
+            if (val) {
+                localStorage.setItem('ramadan_start_date', val);
+                startRamadan = new Date(val);
+                document.getElementById('displayStartDate').textContent = startRamadan.toLocaleDateString('ar-EG');
+                calculateRamadanDays();
+                activeDay = actualRamadanDay;
+                renderDaysStrip();
+                loadDayData(activeDay);
+                updateStreak(); // Recalculate streak based on new date
+                Swal.fire({ title: 'تم التحديث', text: 'تم تحديث تاريخ بداية رمضان', icon: 'success', timer: 1500, showConfirmButton: false, background: '#0f172a', color: '#fff' });
+            }
+        }
+
+        function setKhatmah(type) {
+            khatmahType = type;
+            localStorage.setItem('ramadan_khatmah_target', type);
+
+            document.querySelectorAll('.khatmah-btn').forEach(btn => {
+                if (parseInt(btn.dataset.khatmah) === type) {
+                    btn.classList.add('bg-ramadan-gold', 'text-ramadan-dark');
+                    btn.classList.remove('bg-white/5', 'text-white');
+                } else {
+                    btn.classList.remove('bg-ramadan-gold', 'text-ramadan-dark');
+                    btn.classList.add('bg-white/5', 'text-white');
+                }
+            });
+
+            updateProgressUI();
+            updateDailySchedule(activeDay);
+        }
+
+        function updateDailySchedule(day) {
+            const pagesPerDay = Math.ceil(604 * khatmahType / 30);
+            const perPrayer = Math.floor(pagesPerDay / 5);
+            const remainder = pagesPerDay % 5;
+
+            document.getElementById('pages-fajr').textContent = `${perPrayer + (remainder > 0 ? 1 : 0)} صفحات`;
+            document.getElementById('pages-dhuhr').textContent = `${perPrayer + (remainder > 1 ? 1 : 0)} صفحات`;
+            document.getElementById('pages-asr').textContent = `${perPrayer + (remainder > 2 ? 1 : 0)} صفحات`;
+            document.getElementById('pages-maghrib').textContent = `${perPrayer + (remainder > 3 ? 1 : 0)} صفحات`;
+            document.getElementById('pages-isha').textContent = `${perPrayer} صفحات`;
+
+            document.getElementById('totalDailyPages').textContent = pagesPerDay;
+        }
+
+        function saveProgress() {
+            const input = document.getElementById('pagesReadInput');
+            var val = parseInt(input.value);
+            if (isNaN(val) || val < 0) return;
+            if (val > 604) {
+                val = 604;
+                input.value = 604;
+            }
+
+            pagesRead = val;
+            saveProgressInternally();
+            updateProgressUI();
+
+            if (pagesRead >= 604) {
+                Swal.fire({
+                    title: 'ما شاء الله!',
+                    text: 'أتممت صفحات المصحف كاملاً في هذه الختمة. اضغط على زر إتمام الختمة للبدء في التالية.',
+                    icon: 'success',
+                    background: '#0f172a', color: '#fff'
+                });
+            } else {
+                Swal.fire({ title: 'تم الحفظ', icon: 'success', timer: 1000, showConfirmButton: false, background: '#0f172a', color: '#fff' });
+            }
+        }
+
+        function saveProgressInternally() {
+            localStorage.setItem('ramadan_pages_read', pagesRead);
+            localStorage.setItem('ramadan_khatmah_count', currentKhatmahCount);
+        }
+
+        function completeCurrentKhatmah() {
+            Swal.fire({
+                title: 'إتمام الختمة؟',
+                text: "سيتم تسجيل الختمة وبدء عداد جديد للختمة التالية.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#fbbf24',
+                cancelButtonColor: '#4b5563',
+                confirmButtonText: 'نعم، أتممتها',
+                cancelButtonText: 'إلغاء',
+                background: '#0f172a', color: '#fff'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    currentKhatmahCount++;
+                    pagesRead = 0;
+                    document.getElementById('pagesReadInput').value = 0;
+                    saveProgressInternally();
+                    updateProgressUI();
+                    Swal.fire({ title: 'مبارك!', text: `بدأت الآن الختمة رقم ${currentKhatmahCount}`, icon: 'success', background: '#0f172a', color: '#fff' });
+                }
+            });
+        }
+
+        function updateProgressUI() {
+            document.getElementById('khatmahBadge').textContent = `الختمة ${currentKhatmahCount}`;
+
+            const pct = Math.min((pagesRead / 604) * 100, 100);
+
+            document.getElementById('khatmahProgress').style.width = pct + '%';
+            document.getElementById('khatmahPercent').textContent = Math.round(pct) + '%';
+            document.getElementById('pagesRead').textContent = pagesRead;
+            document.getElementById('totalPages').textContent = 604;
+
+            const completeBtn = document.getElementById('completeKhatmahBtn');
+            if (pagesRead >= 604) {
+                completeBtn.classList.remove('hidden');
+            } else {
+                completeBtn.classList.add('hidden');
+            }
+        }
+
+        // --- New Features Logic ---
+
+        function updateStreak() {
+            // Calculate streak ending at actualRamadanDay
+            // Streak = number of consecutive days BEFORE (and including) today where progress > 50%
+
+            var streak = 0;
+            // Iterate backwards from actualRamadanDay (or 30 if we passed it)
+            const checkDay = Math.min(actualRamadanDay, 30);
+
+            for (var i = checkDay; i >= 1; i--) {
+                const progress = calculateDayProgress(i);
+
+                if (progress >= 50) {
+                    streak++;
+                } else {
+                    // If it's the current day and we haven't finished it yet,
+                    // don't break the streak from yesterday.
+                    // Just stop counting.
+                    if (i === actualRamadanDay) {
+                        continue;
+                    }
+                    // If we find an incomplete day BEFORE today, the streak is broken.
+                    break;
+                }
+            }
+            document.getElementById('streakCount').innerText = streak;
+        }
+
+        function toggleQada() {
+            const checkbox = document.getElementById('missedFastToggle');
+            const key = `ramadan_day_${activeDay}_missed_fast`;
+            localStorage.setItem(key, checkbox.checked);
+            updateQadaBadge();
+        }
+
+        function updateQadaBadge() {
+            var missedCount = 0;
+            for (var i = 1; i <= 30; i++) {
+                if (localStorage.getItem(`ramadan_day_${i}_missed_fast`) === 'true') {
+                    missedCount++;
+                }
+            }
+            document.getElementById('qadaCountBadge').innerText = `عليك ${missedCount} أيام`;
+        }
+
+        function continueReading() {
+            // Use specific Last Read object, fallback to Bookmarks if missing
+            var lastRead = JSON.parse(localStorage.getItem('ramadan_last_read'));
+
+            if (!lastRead) {
+                // Fallback to latest bookmark from favorites
+                const bookmarks = JSON.parse(localStorage.getItem('ramadan_bookmarks') || '[]');
+                const lastBookmark = bookmarks.reverse().find(b => b.type === 'quran');
+                if (lastBookmark) {
+                    lastRead = {
+                        suraName: lastBookmark.suraName,
+                        suraNumber: lastBookmark.suraNumber,
+                        ayahNumber: lastBookmark.ayahNumber
+                    };
+                }
+            }
+
+            if (lastRead) {
+                Swal.fire({
+                    title: 'مواصلة القراءة',
+                    text: `الذهاب إلى آخر علامة: سورة ${lastRead.suraName} - آية ${lastRead.ayahNumber}`,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'نعم، اذهب',
+                    cancelButtonText: 'إلغاء',
+                    background: '#0f172a', color: '#fff'
+                }).then(res => {
+                    if (res.isConfirmed) {
+                        sessionStorage.setItem('open_surah_on_load', lastRead.suraNumber);
+                        window.location.href = `quran.html`;
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: 'تنبيه',
+                    text: 'لم تقم بوضع علامة القراءة (زر الشريط 🔖) في المصحف بعد.',
+                    icon: 'warning',
+                    confirmButtonText: 'حسناً',
+                    background: '#0f172a', color: '#fff'
+                });
+            }
+        }
+
+    </script>
+    <div id="global-player"></div>
+</body>
+
+</html>
+
